@@ -1,0 +1,411 @@
+<!DOCTYPE html><html lang="es"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Pan Muffin</title>
+    <script src="https://cdn.tailwindcss.com/"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        input[type="number"] { -webkit-appearance: none; -moz-appearance: textfield; }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 antialiased selection:bg-amber-900/10">
+    
+    <div class="max-w-6xl mx-auto p-4 md:p-8">
+        
+        <!-- HEADER PREMIUM -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm backdrop-blur-sm transition-all">
+            <div class="flex items-center gap-4">
+                <div class="bg-amber-950/5 text-amber-900 p-3.5 rounded-2xl text-2xl shadow-inner border border-amber-900/5">🥐</div>
+                <div>
+                    <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">Control de Pan Muffin</h1>
+                </div>
+            </div>
+            <button onclick="guardarRegistro()" class="w-full md:w-auto bg-slate-900 hover:bg-amber-950 text-white px-6 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0">
+                <i class="fas fa-save text-amber-400"></i> Guardar Control
+            </button>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- PANEL DE CALCULADORA (IZQUIERDA) -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-5 mb-6">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-amber-900 bg-amber-50 w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold shadow-sm"><i class="fas fa-calculator"></i></span>
+                            <h2 class="text-lg font-bold text-slate-900">Calculadora Diaria</h2>
+                        </div>
+                        <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl focus-within:border-amber-900/40 transition-colors">
+                            <i class="far fa-calendar-alt text-slate-400 text-xs"></i>
+                            <input type="date" id="fecha" onchange="cambioDeFecha()" class="bg-transparent font-bold text-xs text-slate-700 focus:outline-none cursor-pointer">
+                        </div>
+                    </div>
+                    <div id="tabla-calculadora" class="space-y-8"></div>
+                </div>
+            </div>
+
+            <!-- PANEL DE HISTORIAL (DERECHA) -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4 gap-2">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-slate-500 bg-slate-50 w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold shadow-sm"><i class="fas fa-history"></i></span>
+                            <h2 class="text-base font-bold text-slate-900">Historial Diario</h2>
+                        </div>
+                        <button onclick="exportarAPDF()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 transition-colors border border-slate-200">
+                            <i class="fas fa-file-pdf text-red-500 text-xs"></i> Exportar
+                        </button>
+                    </div>
+                    <div id="historial-lista" class="space-y-4 max-h-[68vh] overflow-y-auto pr-1"></div>
+                </div>
+
+                <!-- ALERTA EMERGENTE -->
+                <div id="resumen-guardado" class="hidden bg-emerald-50 border border-emerald-200 rounded-3xl p-5 shadow-sm transition-all duration-300">
+                    <h3 class="font-bold text-emerald-900 flex items-center gap-2 mb-3 text-sm">
+                        <i class="fas fa-check-circle text-emerald-600 text-base"></i> ¡Procesado Exitosamente!
+                    </h3>
+                    <div id="contenido-resumen" class="space-y-2"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let productos = [
+            { id: "muffin", nombre: "PAN MUFFIN", porEmpaque: 84, meta: 350, inicial: 30, vendido: 0, sacadoManana: 0, etiquetaEmpaque: "Jaba 84 uds", empaqueNombreSingular: "jaba", empaqueNombrePlural: "jabas", textoAbajo: "Pan muffin para el" },
+            { id: "tortilla", nombre: "TORTILLA 8", porEmpaque: 12, meta: 52, inicial: 5, vendido: 0, sacadoManana: 0, etiquetaEmpaque: "Bolsa 12 uds", empaqueNombreSingular: "bolsa", empaqueNombrePlural: "bolsas", textoAbajo: "Tortilla de 8 para el" }
+        ];
+
+        function obtenerFechas() {
+            const fechaInput = document.getElementById('fecha').value;
+            if (!fechaInput) return { hoy: '', manana: '' };
+
+            const fHoy = new Date(fechaInput + "T12:00:00");
+            const fManana = new Date(fechaInput + "T12:00:00");
+            fManana.setDate(fManana.getDate() + 1);
+
+            return {
+                hoy: `${String(fHoy.getDate()).padStart(2,'0')}/${String(fHoy.getMonth()+1).padStart(2,'0')}/${fHoy.getFullYear()}`,
+                manana: `${String(fManana.getDate()).padStart(2,'0')}/${String(fManana.getMonth()+1).padStart(2,'0')}`
+            };
+        }
+
+        function cambioDeFecha() {
+            generarCampos();
+        }
+
+        function calcularEmpaquesRedondedos(unidadesNecesarias, porEmpaque) {
+            if (unidadesNecesarias <= 0) return 0;
+            return Math.ceil(unidadesNecesarias / porEmpaque);
+        }
+
+        function generarCampos() {
+            const container = document.getElementById('tabla-calculadora');
+            container.innerHTML = '';
+            const fechas = obtenerFechas();
+
+            productos.forEach((prod, index) => {
+                const faltanteHoy = Math.max(0, prod.meta - prod.inicial);
+                const empaquesHoyCompletos = calcularEmpaquesRedondedos(faltanteHoy, prod.porEmpaque);
+                const sacarHoyFisico = empaquesHoyCompletos * prod.porEmpaque;
+                
+                prod.vendido = faltanteHoy; 
+
+                const empaquesMananaCompletos = calcularEmpaquesRedondedos(prod.sacadoManana, prod.porEmpaque);
+                const sacarMananaFisico = empaquesMananaCompletos * prod.porEmpaque;
+
+                const textoEmpaqueManana = empaquesMananaCompletos === 1 ? prod.empaqueNombreSingular : prod.empaqueNombrePlural;
+                const textoEmpaqueHoy = empaquesHoyCompletos === 1 ? prod.empaqueNombreSingular : prod.empaqueNombrePlural;
+
+                container.innerHTML += `
+                    <div class="bg-slate-50/50 border border-slate-200 rounded-2xl p-5 transition-all hover:shadow-md hover:bg-white duration-200">
+                        <div class="flex items-center justify-between border-b border-slate-200/60 pb-3 mb-4">
+                            <span class="font-extrabold text-base text-slate-900 tracking-tight">${prod.nombre}</span>
+                            <span class="text-[10px] bg-slate-200 text-slate-700 font-bold px-2.5 py-1 rounded-lg tracking-wider uppercase">${prod.etiquetaEmpaque}</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="bg-white p-3 rounded-xl border border-slate-200">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase text-center mb-1 tracking-wider">Meta</label>
+                                <input type="number" value="${prod.meta}" oninput="actualizarValores(${index}, 'meta', this.value)" class="w-full text-center text-lg font-bold text-slate-800 focus:outline-none">
+                            </div>
+                            <div class="bg-white p-3 rounded-xl border border-slate-200 flex flex-col justify-between">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase text-center mb-1 tracking-wider">Me Quedó</label>
+                                <input type="number" id="input-inicial-${index}" value="${prod.inicial}" oninput="actualizarValores(${index}, 'inicial', this.value)" class="w-full text-center text-lg font-bold text-slate-800 focus:outline-none">
+                                <button onclick="abrirConvertidorBolsas(${index})" class="text-[9px] text-amber-900 hover:text-amber-950 font-bold mt-1 block text-center border-t border-slate-100 pt-1 transition-colors">Convertir Bolsas</button>
+                            </div>
+                            <div class="bg-white p-3 rounded-xl border border-slate-200">
+                                <label class="block text-[10px] font-bold text-amber-800 uppercase text-center mb-1 tracking-wider">Para Mañana</label>
+                                <input type="number" value="${prod.sacadoManana}" oninput="actualizarValores(${index}, 'sacadoManana', this.value)" class="w-full text-center text-lg font-bold text-amber-900 focus:outline-none">
+                            </div>
+                        </div>
+                        <div class="mt-4 grid grid-cols-2 gap-4">
+                            <div class="bg-amber-950/[0.02] border border-amber-900/10 rounded-xl p-3 text-center">
+                                <div class="text-amber-800/80 font-bold text-[10px] uppercase tracking-wider">Sacar Hoy (Enteros)</div>
+                                <div id="sacarHoy-val-${prod.id}" class="text-xl font-black text-amber-950">${sacarHoyFisico}</div>
+                                <div id="paquetes-val-${prod.id}" class="text-[10px] text-slate-500 font-bold">${empaquesHoyCompletos} ${textoEmpaqueHoy}</div>
+                            </div>
+                            <div class="bg-slate-100/60 border border-slate-200 rounded-xl p-3 text-center flex flex-col justify-center">
+                                <div class="text-slate-500 font-bold text-[10px] uppercase tracking-wider">Vendido</div>
+                                <div id="vendido-val-${prod.id}" class="text-xl font-black text-slate-800">${prod.vendido}</div>
+                            </div>
+                        </div>
+                        <div class="mt-4 bg-slate-900/[0.02] border border-slate-900/10 rounded-xl p-3 text-center">
+                            <div class="text-slate-600 font-bold text-[10px] uppercase flex items-center justify-center gap-1.5 tracking-wide">
+                                <i class="far fa-calendar-check text-slate-500"></i> ${prod.textoAbajo} ${fechas.manana || 'Mañana'}
+                            </div>
+                            <div id="total-manana-num-${prod.id}" class="text-xl font-black text-slate-900 mt-1">Saca a descongelar: ${empaquesMananaCompletos} ${textoEmpaqueManana}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function actualizarValores(index, campo, valor) {
+            const prod = productos[index];
+            prod[campo] = parseInt(valor) || 0;
+
+            const faltanteHoy = Math.max(0, prod.meta - prod.inicial);
+            const empaquesHoyCompletos = calcularEmpaquesRedondedos(faltanteHoy, prod.porEmpaque);
+            const sacarHoyFisico = empaquesHoyCompletos * prod.porEmpaque;
+            prod.vendido = faltanteHoy; 
+
+            const empaquesMananaCompletos = calcularEmpaquesRedondedos(prod.sacadoManana, prod.porEmpaque);
+
+            const textoEmpaqueManana = empaquesMananaCompletos === 1 ? prod.empaqueNombreSingular : prod.empaqueNombrePlural;
+            const textoEmpaqueHoy = empaquesHoyCompletos === 1 ? prod.empaqueNombreSingular : prod.empaqueNombrePlural;
+
+            document.getElementById(`sacarHoy-val-${prod.id}`).innerText = sacarHoyFisico;
+            document.getElementById(`paquetes-val-${prod.id}`).innerText = `${empaquesHoyCompletos} ${textoEmpaqueHoy}`;
+            document.getElementById(`vendido-val-${prod.id}`).innerText = prod.vendido;
+            document.getElementById(`total-manana-num-${prod.id}`).innerText = `Saca a descongelar: ${empaquesMananaCompletos} ${textoEmpaqueManana}`;
+        }
+
+        function guardarRegistro() {
+            const fechas = obtenerFechas();
+            if (!fechas.hoy) return alert("Por favor ingresa una fecha válida primero.");
+
+            let resumenHTML = `<p class="font-bold text-slate-700 text-xs mb-2">Resumen del día ${fechas.hoy}</p>`;
+            let historialAgrupado = JSON.parse(localStorage.getItem('panHistorialAgrupado')) || {};
+
+            historialAgrupado[fechas.hoy] = [];
+
+            productos.forEach(prod => {
+                const empaquesMananaCompletos = calcularEmpaquesRedondedos(prod.sacadoManana, prod.porEmpaque);
+                const sacarMananaFisico = empaquesMananaCompletos * prod.porEmpaque;
+                
+                const meQuedoNumero = parseInt(prod.inicial) || 0;
+                const totalTiendaManana = meQuedoNumero + sacarMananaFisico;
+
+                const textoEmpaqueManana = empaquesMananaCompletos === 1 ? prod.empaqueNombreSingular : prod.empaqueNombrePlural;
+
+                historialAgrupado[fechas.hoy].push({
+                    producto: prod.nombre, 
+                    meta: parseInt(prod.meta) || 0, 
+                    vendido: parseInt(prod.vendido) || 0,
+                    sacadoManana: sacarMananaFisico, 
+                    finalHoy: meQuedoNumero, 
+                    totalManana: totalTiendaManana, 
+                    fechaMananaTexto: fechas.manana,
+                    paquetesTexto: `${empaquesMananaCompletos} ${textoEmpaqueManana}`
+                });
+
+                resumenHTML += `
+                    <div class="bg-white p-2.5 rounded-xl border border-slate-200 mb-1.5 text-[10px]">
+                        <div class="font-bold text-slate-800 mb-1.5">${prod.nombre}</div>
+                        <div class="grid grid-cols-5 gap-1 text-center font-bold">
+                            <div class="bg-slate-50 p-1 rounded border border-slate-100">Meta<br>${prod.meta}</div>
+                            <div class="bg-slate-50 p-1 rounded border border-slate-100">Vend.<br>${prod.vendido}</div>
+                            <div class="bg-emerald-50/60 p-1 rounded text-emerald-800 border border-emerald-100">Quedó<br>${meQuedoNumero}</div>
+                            <div class="bg-amber-50/60 p-1 rounded text-amber-800 border border-amber-100">Sacar M.<br>${empaquesMananaCompletos} ${textoEmpaqueManana}</div>
+                            <div class="bg-slate-100 p-1 rounded text-slate-800 border border-slate-200">Total M.<br>${totalTiendaManana}</div>
+                        </div>
+                    </div>`;
+            });
+
+            localStorage.setItem('panHistorialAgrupado', JSON.stringify(historialAgrupado));
+            document.getElementById('contenido-resumen').innerHTML = resumenHTML;
+            document.getElementById('resumen-guardado').classList.remove('hidden');
+            alert("✅ Registro guardado.");
+            cargarHistorial();
+        }
+
+        function abrirConvertidorBolsas(index) {
+            const prod = productos[index];
+            const respuesta = prompt(`¿Cuántas BOLSAS completas tienes de ${prod.nombre}? \n(Cada bolsa trae 12 unidades y se SUMARÁ a lo que ya pusiste en el cuadro)`);
+            if (respuesta) {
+                const bolsas = parseInt(respuesta);
+                if (!isNaN(bolsas) && bolsas >= 0) {
+                    const totalUnidadesBolsas = bolsas * 12;
+                    const unidadesPrevias = parseInt(prod.inicial) || 0;
+                    const granTotal = unidadesPrevias + totalUnidadesBolsas;
+                    
+                    document.getElementById(`input-inicial-${index}`).value = granTotal;
+                    actualizarValores(index, 'inicial', granTotal);
+                }
+            }
+        }
+
+        function cargarHistorial() {
+            const historialAgrupado = JSON.parse(localStorage.getItem('panHistorialAgrupado')) || {};
+            const container = document.getElementById('historial-lista');
+            container.innerHTML = '';
+
+            const fechasOrdenadas = Object.keys(historialAgrupado).sort((a, b) => {
+                const dateA = a.split('/').reverse().join('');
+                const dateB = b.split('/').reverse().join('');
+                return dateB.localeCompare(dateA); 
+            });
+
+            if (fechasOrdenadas.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6 font-medium">No hay registros guardados</p>`;
+                return;
+            }
+
+            fechasOrdenadas.forEach((fecha) => {
+                const registrosDelDia = historialAgrupado[fecha];
+                
+                let tarjetaDiaHTML = `
+                    <div class="bg-white border border-slate-200 rounded-2xl p-4 text-[10px] shadow-sm space-y-3.5 transition-all hover:border-slate-300">
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-2 font-bold text-slate-900 text-xs">
+                            <span class="flex items-center gap-1.5 text-slate-700"><i class="far fa-calendar-alt text-amber-900"></i> Ventas del: ${fecha}</span>
+                            <button onclick="eliminarDia('${fecha}')" class="text-slate-400 hover:text-red-500 transition-colors p-1" title="Eliminar este día"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                        <div class="space-y-3">
+                `;
+
+                registrosDelDia.forEach(r => {
+                    tarjetaDiaHTML += `
+                        <div class="border border-slate-100 rounded-xl p-2.5 bg-slate-50/50">
+                            <div class="font-extrabold text-slate-800 mb-2 text-[9.5px] tracking-wide uppercase flex justify-between items-center">
+                                <span>${r.producto}</span>
+                                <span class="text-[7.5px] font-bold text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded">${r.paquetesTexto || 'Enteros'}</span>
+                            </div>
+                            <div class="grid grid-cols-5 gap-1 text-center font-bold text-[8px] tracking-tight">
+                                <div class="bg-white border border-slate-100 p-1.5 rounded shadow-2xs">Meta<br><b class="text-slate-800 text-[9.5px]">${r.meta}</b></div>
+                                <div class="bg-white border border-slate-100 p-1.5 rounded shadow-2xs">Vendido<br><b class="text-slate-800 text-[9.5px]">${r.vendido}</b></div>
+                                <div class="bg-emerald-50/50 text-emerald-900 border border-emerald-100 p-1.5 rounded shadow-2xs">Me Quedó<br><b class="text-[9.5px]">${r.finalHoy}</b></div>
+                                <div class="bg-amber-50/50 text-amber-900 border border-amber-100 p-1.5 rounded shadow-2xs">Sacar M.<br><b class="text-[9.5px]">${r.sacadoManana}</b></div>
+                                
+                                <div class="bg-slate-900 text-white border border-slate-950 p-1.5 rounded shadow-sm flex flex-col justify-center">
+                                    <span class="text-[6.5px] text-slate-400 font-semibold uppercase">Total (${r.fechaMananaTexto || 'M.'})</span>
+                                    <b class="text-[10px] text-amber-400 font-extrabold mt-0.5">${r.totalManana}</b>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                tarjetaDiaHTML += `
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += tarjetaDiaHTML;
+            });
+        }
+
+        function eliminarDia(fecha) {
+            if (confirm(`¿Estás seguro de que quieres borrar de forma permanente los registros del día ${fecha}?`)) {
+                let h = JSON.parse(localStorage.getItem('panHistorialAgrupado')) || {};
+                delete h[fecha];
+                localStorage.setItem('panHistorialAgrupado', JSON.stringify(h));
+                cargarHistorial();
+            }
+        }
+
+        function exportarAPDF() {
+            const historialAgrupado = JSON.parse(localStorage.getItem('panHistorialAgrupado')) || {};
+            const fechas = Object.keys(historialAgrupado);
+            if (fechas.length === 0) return alert("No hay datos para exportar.");
+            
+            let filasHTML = '';
+            let count = 0;
+
+            const fechasOrdenadas = fechas.sort((a, b) => {
+                const dateA = a.split('/').reverse().join('');
+                const dateB = b.split('/').reverse().join('');
+                return dateB.localeCompare(dateA);
+            });
+
+            fechasOrdenadas.forEach((fecha) => {
+                historialAgrupado[fecha].forEach((r) => {
+                    const bg = count % 2 === 0 ? '#ffffff' : '#f8fafc';
+                    
+                    // CORRECCIÓN: Estructurar la fecha de mañana con el mismo año de la fecha de registro
+                    let anio = fecha.split('/')[2] || new Date().getFullYear();
+                    let fechaMananaCompleta = r.fechaMananaTexto ? `${r.fechaMananaTexto}/${anio}` : '';
+
+                    filasHTML += `
+                        <tr style="background-color: ${bg}; text-align: center; font-size: 11px;">
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; font-weight: bold;">${fecha}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-weight: bold; color: #475569;">${fechaMananaCompleta}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; font-weight: bold; color: #78350f;">${r.producto}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${r.meta}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${r.vendido}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; color: #15803d; font-weight: bold; background-color: #f0fdf4;">${r.finalHoy}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; color: #c2410c; font-weight: bold; background-color: #fff7ed;">${r.sacadoManana} <small style="display:block; font-size:8px; color:#b45309; font-weight:400;">(${r.paquetesTexto})</small></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; color: #0f172a; font-weight: 800; background-color: #f1f5f9;">${r.totalManana}</td>
+                        </tr>`;
+                    count++;
+                });
+            });
+
+            const ventanaReporte = window.open('', '_blank');
+            ventanaReporte.document.write(`
+                <html>
+                <head>
+                    <title>Reporte_Muffin_Inventario</title>
+                    <style>
+                        body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 20px; color: #1e293b; background: #fff; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+                        th { background-color: #0f172a; color: white; padding: 12px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+                        @media print { @page { size: A4 landscape; margin: 10mm; } }
+                    </style>
+                </head>
+                <body>
+                    <div style="border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px;">
+                        <h2 style="margin: 0; color: #0f172a; font-size: 22px;">Control de Pan Muffin</h2>
+                        <p style="margin: 3px 0 0 0; font-size: 12px; color: #64748b; font-weight: bold;">Reporte Histórico</p>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="text-align:left;">Fecha Venta</th>
+                                <th>Fecha Mañana</th>
+                                <th style="text-align:left;">Producto</th>
+                                <th>Meta</th>
+                                <th>Vendido</th>
+                                <th>Me Quedó</th>
+                                <th>Sacar Mañana</th>
+                                <th>Total Mañana</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${filasHTML}
+                        </tbody>
+                    </table>
+                    <script>
+                        setTimeout(function(){
+                            window.print();
+                        }, 300);
+                    <\/script>
+                </body>
+                </html>
+            `);
+            ventanaReporte.document.close();
+        }
+
+        window.onload = () => {
+            document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
+            generarCampos();
+            cargarHistorial();
+        };
+    </script>
+</body></html>
