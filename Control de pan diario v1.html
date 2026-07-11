@@ -2,83 +2,175 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Pan Muffin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#f97316">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Control Muffin</title>
+    
+    <!-- Enlace dinámico para el Manifest PWA -->
+    <link rel="manifest" id="manifest">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
     <style>
         input[type="number"] { -webkit-appearance: none; -moz-appearance: textfield; }
         input[type="number"]::-webkit-outer-spin-button,
         input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        ::-webkit-scrollbar { width: 6px; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        /* Animaciones suaves */
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800 antialiased selection:bg-amber-900/10">
+<body class="bg-slate-100 min-h-screen text-slate-800 antialiased selection:bg-orange-500/20 pb-24 md:pb-8">
     
-    <div class="max-w-6xl mx-auto p-4 md:p-8">
-        
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm backdrop-blur-sm transition-all">
+    <!-- Cabecera estilo App Nivel Premium -->
+    <header class="bg-gradient-to-br from-orange-500 via-amber-500 to-amber-600 shadow-lg shadow-orange-500/20 sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-5 py-6 flex flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-4">
-                <div class="bg-amber-950/5 text-amber-900 p-3.5 rounded-2xl text-2xl shadow-inner border border-amber-900/5">🥐</div>
+                <!-- Logotipo -->
+                <div class="bg-white/20 backdrop-blur-md border border-white/40 p-3.5 rounded-2xl text-2xl shadow-inner shadow-white/30 flex items-center justify-center relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    🥐
+                </div>
                 <div>
-                    <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">Control de Pan Muffin</h1>
+                    <h1 class="text-2xl font-black tracking-tight text-white drop-shadow-sm leading-none mb-1">Pan Muffin</h1>
+                    <p class="text-orange-100 text-[11px] font-bold tracking-widest uppercase opacity-90">Control Diario</p>
                 </div>
             </div>
-            <button onclick="guardarRegistro()" class="w-full md:w-auto bg-slate-900 hover:bg-amber-950 text-white px-6 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0">
-                <i class="fas fa-save text-amber-400"></i> Guardar Control
-            </button>
-        </header>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <div class="lg:col-span-2 space-y-6">
-                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8">
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-5 mb-6">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-amber-900 bg-amber-50 w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold shadow-sm"><i class="fas fa-calculator"></i></span>
-                            <h2 class="text-lg font-bold text-slate-900">Calculadora Diaria</h2>
-                        </div>
-                        <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl focus-within:border-amber-900/40 transition-colors">
-                            <i class="far fa-calendar-alt text-slate-400 text-xs"></i>
-                            <input type="date" id="fecha" onchange="cambioDeFecha()" class="bg-transparent font-bold text-xs text-slate-700 focus:outline-none cursor-pointer">
-                        </div>
+            <!-- Botón de Instalación (Oculto por defecto, se activa en móviles o Chrome) -->
+            <button id="btn-instalar" onclick="instalarApp()" class="hidden bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 text-white px-4 py-2.5 rounded-xl font-bold items-center justify-center gap-2 transition-all shadow-sm text-xs">
+                <i class="fas fa-download"></i> Instalar App
+            </button>
+            
+            <!-- Botón Guardar (Solo Desktop) -->
+            <button onclick="guardarRegistro()" class="hidden md:flex bg-slate-900 hover:bg-black text-white px-6 py-3 rounded-xl font-extrabold items-center justify-center gap-2 shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+                <i class="fas fa-save text-orange-400"></i> Guardar Datos
+            </button>
+        </div>
+    </header>
+
+    <div class="max-w-6xl mx-auto px-4 md:px-8 mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- SECCIÓN: Calculadora -->
+        <div class="lg:col-span-2 space-y-6 fade-in">
+            <div class="bg-white rounded-[2rem] border border-slate-200/60 shadow-xl shadow-slate-200/40 p-5 md:p-8 relative overflow-hidden">
+                <!-- Adorno visual -->
+                <div class="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-bl-full -z-10 opacity-60"></div>
+                
+                <div class="flex items-center justify-between border-b border-slate-100 pb-5 mb-6">
+                    <div class="flex items-center gap-3">
+                        <span class="text-orange-500 bg-orange-50 w-10 h-10 rounded-2xl flex items-center justify-center text-lg font-black shadow-sm border border-orange-100"><i class="fas fa-calculator"></i></span>
+                        <h2 class="text-xl font-black text-slate-900">Calculadora</h2>
                     </div>
-                    <div id="tabla-calculadora" class="space-y-8"></div>
+                    <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-100 transition-all shadow-inner">
+                        <i class="far fa-calendar-alt text-orange-500 text-sm"></i>
+                        <input type="date" id="fecha" onchange="cambioDeFecha()" class="bg-transparent font-bold text-sm text-slate-800 focus:outline-none cursor-pointer">
+                    </div>
                 </div>
+                <div id="tabla-calculadora" class="space-y-6"></div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN: Historial -->
+        <div class="space-y-6 fade-in" style="animation-delay: 0.1s;">
+            <div class="bg-white rounded-[2rem] border border-slate-200/60 shadow-xl shadow-slate-200/40 p-5">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-slate-600 bg-slate-100 w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black shadow-sm"><i class="fas fa-history"></i></span>
+                        <h2 class="text-lg font-black text-slate-900">Historial</h2>
+                    </div>
+                    <button onclick="exportarAPDF()" class="bg-red-50 hover:bg-red-100 text-red-600 text-[11px] font-extrabold px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors border border-red-100">
+                        <i class="fas fa-file-pdf"></i> Exportar
+                    </button>
+                </div>
+                <div id="historial-lista" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scroll"></div>
             </div>
 
-            <div class="space-y-6">
-                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4 gap-2">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-slate-500 bg-slate-50 w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold shadow-sm"><i class="fas fa-history"></i></span>
-                            <h2 class="text-base font-bold text-slate-900">Historial Diario</h2>
-                        </div>
-                        <button onclick="exportarAPDF()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 transition-colors border border-slate-200">
-                            <i class="fas fa-file-pdf text-red-500 text-xs"></i> Exportar
-                        </button>
-                    </div>
-                    <div id="historial-lista" class="space-y-4 max-h-[68vh] overflow-y-auto pr-1"></div>
-                </div>
-
-                <div id="resumen-guardado" class="hidden bg-emerald-50 border border-emerald-200 rounded-3xl p-5 shadow-sm transition-all duration-300">
-                    <h3 class="font-bold text-emerald-900 flex items-center gap-2 mb-3 text-sm">
-                        <i class="fas fa-check-circle text-emerald-600 text-base"></i> ¡Procesado Exitosamente!
-                    </h3>
-                    <div id="contenido-resumen" class="space-y-2"></div>
-                </div>
+            <div id="resumen-guardado" class="hidden bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-[2rem] p-6 shadow-xl shadow-emerald-500/20 transition-all duration-300">
+                <h3 class="font-black flex items-center gap-2 mb-3 text-sm tracking-wide">
+                    <i class="fas fa-check-circle text-emerald-100 text-lg"></i> ¡PROCESADO EXITOSAMENTE!
+                </h3>
+                <div id="contenido-resumen" class="space-y-2"></div>
             </div>
         </div>
     </div>
 
+    <!-- Botón Flotante (Solo visible en Móvil) para que parezca app nativa -->
+    <div class="fixed bottom-5 left-5 right-5 md:hidden z-50 fade-in">
+        <button onclick="guardarRegistro()" class="w-full bg-slate-900 active:bg-black text-white p-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 shadow-2xl shadow-slate-900/40 border border-slate-800">
+            <i class="fas fa-save text-orange-400"></i> GUARDAR DATOS
+        </button>
+    </div>
+
     <script>
+        // ==========================================
+        // MAGIA PWA (APP INSTALABLE) EN UN SOLO ARCHIVO
+        // ==========================================
+        const manifestApp = {
+            "name": "Panadería Muffin",
+            "short_name": "Pan Muffin",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#f1f5f9",
+            "theme_color": "#f97316",
+            "icons": [{
+                "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48dGV4dCB5PSIuOWVtIiBmb250LXNpemU9IjkwIj7wn6WQLjwvdGV4dD48L3N2Zz4=",
+                "sizes": "192x192",
+                "type": "image/svg+xml"
+            }]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestApp)], {type: 'application/manifest+json'});
+        document.getElementById('manifest').href = URL.createObjectURL(manifestBlob);
+
+        // Service Worker Dinámico (Para funcionamiento Offline y ser App válida)
+        const swCode = `
+            self.addEventListener('install', e => self.skipWaiting());
+            self.addEventListener('activate', e => e.waitUntil(clients.claim()));
+            self.addEventListener('fetch', e => {});
+        `;
+        const swBlob = new Blob([swCode], {type: 'text/javascript'});
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(console.error);
+        }
+
+        // Lógica del botón de instalar
+        let promptInstalacion;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            promptInstalacion = e;
+            document.getElementById('btn-instalar').classList.remove('hidden');
+            document.getElementById('btn-instalar').classList.add('flex');
+        });
+
+        function instalarApp() {
+            if (promptInstalacion) {
+                promptInstalacion.prompt();
+                promptInstalacion.userChoice.then((resultado) => {
+                    if (resultado.outcome === 'accepted') {
+                        document.getElementById('btn-instalar').classList.add('hidden');
+                    }
+                    promptInstalacion = null;
+                });
+            }
+        }
+
+        // ==========================================
+        // LÓGICA DE LA APLICACIÓN (CÁLCULOS Y DATOS)
+        // ==========================================
+        const metasBase = { muffin: 350, tortilla: 52 };
+
         let productos = [
-            { id: "muffin", nombre: "PAN MUFFIN", porEmpaque: 84, meta: 350, inicial: 30, vendido: 0, sacadoManana: 0, etiquetaEmpaque: "Jaba 7 bolsas 12 unidades", empaqueNombreSingular: "jaba", empaqueNombrePlural: "jabas", textoAbajo: "Pan muffin para el" },
-            { id: "tortilla", nombre: "TORTILLA 8", porEmpaque: 12, meta: 52, inicial: 5, vendido: 0, sacadoManana: 0, etiquetaEmpaque: "Bolsa 12 uds", empaqueNombreSingular: "bolsa", empaqueNombrePlural: "bolsas", textoAbajo: "Tortilla de 8 para el" }
+            { id: "muffin", nombre: "PAN MUFFIN", porEmpaque: 84, meta: 350, inicial: 0, vendido: 0, sacadoManana: 0, etiquetaEmpaque: "Jaba 7 bolsas 12 uds", empaqueNombreSingular: "jaba", empaqueNombrePlural: "jabas", textoAbajo: "Pan muffin para el", unidadMedida: "Unidades", textoMetaAyerDinamico: "" },
+            { id: "tortilla", nombre: "TORTILLA 8", porEmpaque: 12, meta: 52, inicial: 0, vendido: 0, sacadoManana: 0, etiquetaEmpaque: "Bolsa 12 uds", empaqueNombreSingular: "bolsa", empaqueNombrePlural: "bolsas", textoAbajo: "Tortilla de 8 para el", unidadMedida: "Unidades", textoMetaAyerDinamico: "" }
         ];
 
         function obtenerFechas() {
@@ -97,7 +189,9 @@
         }
 
         function cambioDeFecha() { 
+            productos.forEach(p => { p.inicial = 0; p.sacadoManana = 0; p.vendido = 0; });
             generarCampos(); 
+            document.getElementById('resumen-guardado').classList.add('hidden');
         }
 
         function calcularEmpaquesRedondedos(unidadesNecesarias, porEmpaque) {
@@ -110,50 +204,69 @@
             container.innerHTML = '';
             const fechas = obtenerFechas();
 
+            let historialAgrupado = JSON.parse(localStorage.getItem('panHistorialAgrupado')) || {};
+            let fechasGuardadas = Object.keys(historialAgrupado).sort((a, b) => b.split('/').reverse().join('').localeCompare(a.split('/').reverse().join('')));
+            let hoyInvertido = fechas.hoy ? fechas.hoy.split('/').reverse().join('') : '';
+            let fechaAnteriorKey = fechasGuardadas.find(f => f.split('/').reverse().join('') < hoyInvertido);
+
             productos.forEach((prod, index) => {
+                prod.meta = metasBase[prod.id];
+                prod.textoMetaAyerDinamico = fechas.ayer || 'Ayer';
+
+                if (fechaAnteriorKey) {
+                    let recAnterior = historialAgrupado[fechaAnteriorKey].find(r => r.producto === prod.nombre);
+                    if (recAnterior) {
+                        prod.meta = recAnterior.totalManana;
+                        prod.textoMetaAyerDinamico = fechaAnteriorKey; 
+                    }
+                }
+
                 container.innerHTML += `
-                    <div class="bg-slate-50/50 border border-slate-200 rounded-2xl p-5 transition-all hover:shadow-md hover:bg-white duration-200">
-                        <div class="flex items-center justify-between border-b border-slate-200/60 pb-3 mb-4">
-                            <span class="font-extrabold text-base text-slate-900 tracking-tight">${prod.nombre}</span>
-                            <span class="text-[10px] bg-slate-200 text-slate-700 font-bold px-2.5 py-1 rounded-lg tracking-wider uppercase">${prod.etiquetaEmpaque}</span>
+                    <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                            <span class="font-black text-[15px] text-slate-800 tracking-tight">${prod.nombre}</span>
+                            <span class="text-[9px] bg-orange-50 text-orange-600 font-extrabold px-2 py-1 rounded-lg tracking-wider uppercase border border-orange-100">${prod.etiquetaEmpaque}</span>
                         </div>
-                        <div class="grid grid-cols-3 gap-4">
-                            <div class="bg-white p-3 rounded-xl border border-slate-200">
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase text-center mb-1 tracking-wider">Meta de Ayer</label>
-                                <input type="number" id="input-meta-${index}" value="${prod.meta}" oninput="actualizarValores(${index}, 'meta', this.value)" class="w-full text-center text-lg font-bold text-slate-800 focus:outline-none">
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 shadow-inner">
+                                <label class="block text-[9px] font-bold text-slate-400 uppercase text-center mb-1 tracking-wider">Meta (${prod.textoMetaAyerDinamico.substring(0,5)})</label>
+                                <input type="number" id="input-meta-${index}" value="${prod.meta}" min="0" onfocus="this.select()" oninput="actualizarValores(${index}, 'meta', this.value)" class="w-full bg-transparent text-center text-lg font-black text-slate-700 focus:outline-none">
                             </div>
-                            <div class="bg-white p-3 rounded-xl border border-slate-200 flex flex-col justify-between">
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase text-center mb-1 tracking-wider">Me Quedó</label>
-                                <input type="number" id="input-inicial-${index}" value="${prod.inicial}" oninput="actualizarValores(${index}, 'inicial', this.value)" class="w-full text-center text-lg font-bold text-slate-800 focus:outline-none">
-                                <button onclick="abrirConvertidorBolsas(${index})" class="text-[9px] text-amber-900 hover:text-amber-950 font-bold mt-1 block text-center border-t border-slate-100 pt-1 transition-colors">Convertir Bolsas</button>
+                            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 shadow-inner flex flex-col justify-between relative group">
+                                <label class="block text-[9px] font-bold text-slate-400 uppercase text-center mb-1 tracking-wider">Me Quedó</label>
+                                <input type="number" id="input-inicial-${index}" value="${prod.inicial}" min="0" onfocus="this.select()" oninput="actualizarValores(${index}, 'inicial', this.value)" class="w-full bg-transparent text-center text-lg font-black text-orange-600 focus:outline-none">
+                                <button onclick="abrirConvertidorBolsas(${index})" class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-white shadow-sm border border-slate-200 text-[8px] text-orange-600 font-bold px-2 py-0.5 rounded-full hover:bg-orange-50 transition-colors whitespace-nowrap">Bolsas <i class="fas fa-plus"></i></button>
                             </div>
-                            <div class="bg-white p-3 rounded-xl border border-slate-200">
-                                <label class="block text-[10px] font-bold text-amber-800 uppercase text-center mb-1 tracking-wider">Para Mañana</label>
-                                <input type="number" id="input-sacadoManana-${index}" value="${prod.sacadoManana}" oninput="actualizarValores(${index}, 'sacadoManana', this.value)" class="w-full text-center text-lg font-bold text-amber-900 focus:outline-none">
-                            </div>
-                        </div>
-                        <div class="mt-4 grid grid-cols-2 gap-4">
-                            <div class="bg-amber-950/[0.02] border border-amber-900/10 rounded-xl p-3 text-center">
-                                <div id="lbl-meta-ayer-${prod.id}" class="text-amber-800/80 font-bold text-[10px] uppercase tracking-wider">Meta del ${fechas.ayer || 'Ayer'}</div>
-                                <div id="sacarHoy-val-${prod.id}" class="text-xl font-black text-amber-950">0</div>
-                                <div id="paquetes-val-${prod.id}" class="text-[10px] text-slate-500 font-bold">0</div>
-                            </div>
-                            <div class="bg-slate-100/60 border border-slate-200 rounded-xl p-3 text-center flex flex-col justify-center">
-                                <div class="text-slate-500 font-bold text-[10px] uppercase tracking-wider">Vendido hoy</div>
-                                <div id="vendido-val-${prod.id}" class="text-xl font-black text-slate-800">0</div>
+                            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 shadow-inner">
+                                <label class="block text-[9px] font-bold text-slate-400 uppercase text-center mb-1 tracking-wider">Pa' Mañana</label>
+                                <input type="number" id="input-sacadoManana-${index}" value="${prod.sacadoManana}" min="0" onfocus="this.select()" oninput="actualizarValores(${index}, 'sacadoManana', this.value)" class="w-full bg-transparent text-center text-lg font-black text-emerald-600 focus:outline-none">
                             </div>
                         </div>
-                        <div class="mt-4 bg-slate-900/[0.02] border border-slate-900/10 rounded-xl p-3 text-center">
-                            <div id="lbl-texto-abajo-${prod.id}" class="text-slate-600 font-bold text-[10px] uppercase flex items-center justify-center gap-1.5 tracking-wide">
-                                <i class="far fa-calendar-check text-slate-500"></i> ${prod.textoAbajo} ${fechas.manana || 'Mañana'}
+                        <div class="mt-5 grid grid-cols-2 gap-3">
+                            <div class="bg-slate-800 rounded-xl p-3 text-center shadow-md flex flex-col justify-center relative overflow-hidden">
+                                <div class="absolute -right-2 -top-2 opacity-10 text-4xl"><i class="fas fa-box-open"></i></div>
+                                <div id="lbl-meta-ayer-${prod.id}" class="text-slate-400 font-bold text-[9px] uppercase tracking-widest relative z-10">Meta (${fechas.hoy.substring(0,5)})</div>
+                                <div class="flex items-baseline justify-center gap-1 mt-0.5 relative z-10">
+                                    <div id="sacarHoy-val-${prod.id}" class="text-xl font-black text-white">0</div>
+                                </div>
+                                <div id="paquetes-val-${prod.id}" class="text-[9px] text-orange-400 font-bold mt-0.5 relative z-10">0</div>
                             </div>
-                            <div id="total-manana-num-${prod.id}" class="text-xl font-black text-slate-900 mt-1">Sacar: 0</div>
+                            <div class="bg-orange-50/80 border border-orange-100 rounded-xl p-3 text-center flex flex-col justify-center">
+                                <div id="lbl-vendido-hoy-${prod.id}" class="text-orange-600/70 font-bold text-[9px] uppercase tracking-widest">Vendido ${fechas.hoy ? fechas.hoy.substring(0,5) : 'hoy'}</div>
+                                <div id="vendido-val-${prod.id}" class="text-xl font-black text-orange-600 mt-0.5">0</div>
+                            </div>
+                        </div>
+                        <div class="mt-3 bg-slate-50 border border-slate-100 rounded-xl p-3 text-center">
+                            <div id="lbl-texto-abajo-${prod.id}" class="text-slate-500 font-bold text-[9px] uppercase flex items-center justify-center gap-1 tracking-widest mb-1">
+                                <i class="far fa-calendar-check text-slate-400"></i> ${prod.textoAbajo} ${fechas.manana || 'Mañana'}
+                            </div>
+                            <div id="total-manana-num-${prod.id}" class="text-lg font-black text-slate-800 leading-none">0 ${prod.empaqueNombrePlural}</div>
+                            <div id="desglose-manana-${prod.id}" class="text-[10px] text-emerald-600 font-black mt-1 bg-emerald-50 inline-block px-2 py-0.5 rounded-lg border border-emerald-100">0 ${prod.unidadMedida}</div>
                         </div>
                     </div>
                 `;
             });
             
-            // Forzar primer cálculo visual de totales
             productos.forEach((_, idx) => calcularTotalesVisuales(idx));
         }
 
@@ -175,25 +288,18 @@
             const textoEmpaqueManana = empaquesMananaCompletos === 1 ? prod.empaqueNombreSingular : prod.empaqueNombrePlural;
             const textoEmpaqueHoy = empaquesHoyCompletos === 1 ? prod.empaqueNombreSingular : prod.empaqueNombrePlural;
 
-            // Actualizaciones dinámicas sin redibujar inputs (así no se cierra el teclado)
-            if(document.getElementById(`lbl-meta-ayer-${prod.id}`)) {
-                document.getElementById(`lbl-meta-ayer-${prod.id}`).innerText = `Meta del ${fechas.ayer || 'Ayer'}`;
-            }
-            if(document.getElementById(`sacarHoy-val-${prod.id}`)) {
-                document.getElementById(`sacarHoy-val-${prod.id}`).innerText = sacarHoyFisico;
-            }
-            if(document.getElementById(`paquetes-val-${prod.id}`)) {
-                document.getElementById(`paquetes-val-${prod.id}`).innerText = `${empaquesHoyCompletos} ${textoEmpaqueHoy}`;
-            }
-            if(document.getElementById(`vendido-val-${prod.id}`)) {
-                document.getElementById(`vendido-val-${prod.id}`).innerText = prod.vendido;
-            }
-            if(document.getElementById(`lbl-texto-abajo-${prod.id}`)) {
-                document.getElementById(`lbl-texto-abajo-${prod.id}`).innerHTML = `<i class="far fa-calendar-check text-slate-500"></i> ${prod.textoAbajo} ${fechas.manana || 'Mañana'}`;
-            }
-            if(document.getElementById(`total-manana-num-${prod.id}`)) {
-                document.getElementById(`total-manana-num-${prod.id}`).innerText = `Sacar ${fechas.manana || 'Mañana'}: ${empaquesMananaCompletos} ${textoEmpaqueManana}`;
-            }
+            const sacarMananaFisico = empaquesMananaCompletos * prod.porEmpaque;
+            const meQuedoNumero = parseInt(prod.inicial) || 0;
+            const totalParaManana = meQuedoNumero + sacarMananaFisico;
+
+            if(document.getElementById(`lbl-meta-ayer-${prod.id}`)) document.getElementById(`lbl-meta-ayer-${prod.id}`).innerText = `Meta (${fechas.hoy ? fechas.hoy.substring(0,5) : ''})`;
+            if(document.getElementById(`sacarHoy-val-${prod.id}`)) document.getElementById(`sacarHoy-val-${prod.id}`).innerText = sacarHoyFisico;
+            if(document.getElementById(`paquetes-val-${prod.id}`)) document.getElementById(`paquetes-val-${prod.id}`).innerText = `${empaquesHoyCompletos} ${textoEmpaqueHoy}`;
+            if(document.getElementById(`lbl-vendido-hoy-${prod.id}`)) document.getElementById(`lbl-vendido-hoy-${prod.id}`).innerText = `Vendido ${fechas.hoy ? fechas.hoy.substring(0,5) : 'hoy'}`;
+            if(document.getElementById(`vendido-val-${prod.id}`)) document.getElementById(`vendido-val-${prod.id}`).innerText = prod.vendido;
+            if(document.getElementById(`lbl-texto-abajo-${prod.id}`)) document.getElementById(`lbl-texto-abajo-${prod.id}`).innerHTML = `<i class="far fa-calendar-check text-slate-400"></i> ${prod.textoAbajo} ${fechas.manana || 'Mañana'}`;
+            if(document.getElementById(`total-manana-num-${prod.id}`)) document.getElementById(`total-manana-num-${prod.id}`).innerText = `${empaquesMananaCompletos} ${textoEmpaqueManana}`;
+            if(document.getElementById(`desglose-manana-${prod.id}`)) document.getElementById(`desglose-manana-${prod.id}`).innerText = `${totalParaManana} ${prod.unidadMedida}`;
         }
 
         function abrirConvertidorBolsas(index) {
@@ -202,9 +308,7 @@
             if (respuesta) {
                 const bolsas = parseInt(respuesta);
                 if (!isNaN(bolsas) && bolsas >= 0) {
-                    const totalUnidadesBolsas = bolsas * 12;
-                    const unidadesPrevias = parseInt(prod.inicial) || 0;
-                    const granTotal = unidadesPrevias + totalUnidadesBolsas;
+                    const granTotal = (parseInt(prod.inicial) || 0) + (bolsas * 12);
                     document.getElementById(`input-inicial-${index}`).value = granTotal;
                     actualizarValores(index, 'inicial', granTotal);
                 }
@@ -214,36 +318,45 @@
         function guardarRegistro() {
             const fechas = obtenerFechas();
             if (!fechas.hoy) return alert("Por favor ingresa una fecha válida primero.");
-            let resumenHTML = `<p class="font-bold text-slate-700 text-xs mb-2">Resumen del día ${fechas.hoy}</p>`;
+            
             let historialAgrupado = JSON.parse(localStorage.getItem('panHistorialAgrupado')) || {};
+            
+            if (historialAgrupado[fechas.hoy] && !confirm(`Ya existe un registro guardado para la fecha ${fechas.hoy}. ¿Deseas reemplazarlo con los datos actuales?`)) return;
+
+            let resumenHTML = `<p class="font-bold text-emerald-100 text-[10px] uppercase tracking-wider mb-2 border-b border-emerald-400/30 pb-2">Resumen del día ${fechas.hoy}</p>`;
             historialAgrupado[fechas.hoy] = [];
+            
             productos.forEach(prod => {
                 const empaquesMananaCompletos = calcularEmpaquesRedondedos(prod.sacadoManana, prod.porEmpaque);
                 const sacarMananaFisico = empaquesMananaCompletos * prod.porEmpaque;
                 const meQuedoNumero = parseInt(prod.inicial) || 0;
                 const totalTiendaManana = meQuedoNumero + sacarMananaFisico;
                 const textoEmpaqueManana = empaquesMananaCompletos === 1 ? prod.empaqueNombreSingular : prod.empaqueNombrePlural;
+                const textoFechaMetaCorta = prod.textoMetaAyerDinamico ? prod.textoMetaAyerDinamico.substring(0,5) : fechas.ayer.substring(0,5);
+
                 historialAgrupado[fechas.hoy].push({
                     producto: prod.nombre, meta: parseInt(prod.meta) || 0, vendido: parseInt(prod.vendido) || 0,
-                    sacadoManana: sacarMananaFisico, finalHoy: meQuedoNumero, totalManana: totalTiendaManana, fechaMananaTexto: fechas.manana,
+                    sacadoManana: sacarMananaFisico, finalHoy: meQuedoNumero, totalManana: totalTiendaManana, 
+                    fechaMananaTexto: fechas.manana, fechaAyerTexto: prod.textoMetaAyerDinamico || fechas.ayer,
                     paquetesTexto: `${empaquesMananaCompletos} ${textoEmpaqueManana}`
                 });
+                
                 resumenHTML += `
-                    <div class="bg-white p-2.5 rounded-xl border border-slate-200 mb-1.5 text-[10px]">
-                        <div class="font-bold text-slate-800 mb-1.5">${prod.nombre}</div>
-                        <div class="grid grid-cols-5 gap-1 text-center font-bold">
-                            <div class="bg-slate-50 p-1 rounded border border-slate-100">Meta de Ayer<br>${prod.meta}</div>
-                            <div class="bg-slate-50 p-1 rounded border border-slate-100">Vendido hoy<br>${prod.vendido}</div>
-                            <div class="bg-emerald-50/60 p-1 rounded text-emerald-800 border border-emerald-100">Sobrante<br>${meQuedoNumero}</div>
-                            <div class="bg-amber-50/60 p-1 rounded text-amber-800 border border-emerald-100">Descong.<br>${empaquesMananaCompletos} ${textoEmpaqueManana}</div>
-                            <div class="bg-slate-100 p-1 rounded text-slate-800 border border-slate-200">Total ${fechas.manana}<br>${totalTiendaManana}</div>
+                    <div class="bg-white/10 backdrop-blur-sm p-3 rounded-xl border border-white/20 mb-2">
+                        <div class="font-black text-white mb-2 text-[11px] tracking-wide">${prod.nombre}</div>
+                        <div class="grid grid-cols-5 gap-1.5 text-center font-bold text-[9px]">
+                            <div class="bg-black/20 p-1.5 rounded-lg border border-white/10">Meta ${textoFechaMetaCorta}<br><span class="text-white text-xs">${prod.meta}</span></div>
+                            <div class="bg-black/20 p-1.5 rounded-lg border border-white/10">Vendido<br><span class="text-white text-xs">${prod.vendido}</span></div>
+                            <div class="bg-emerald-400/20 p-1.5 rounded-lg border border-emerald-300/30 text-emerald-100">Sobrante<br><span class="text-white text-xs">${meQuedoNumero}</span></div>
+                            <div class="bg-emerald-400/20 p-1.5 rounded-lg border border-emerald-300/30 text-emerald-100">Descong.<br><span class="text-white text-xs">${empaquesMananaCompletos} ${textoEmpaqueManana.substring(0,3)}</span></div>
+                            <div class="bg-white text-emerald-900 p-1.5 rounded-lg border border-white">Meta ${fechas.manana.substring(0,5)}<br><span class="text-emerald-700 text-xs font-black">${totalTiendaManana}</span></div>
                         </div>
                     </div>`;
             });
             localStorage.setItem('panHistorialAgrupado', JSON.stringify(historialAgrupado));
             document.getElementById('contenido-resumen').innerHTML = resumenHTML;
             document.getElementById('resumen-guardado').classList.remove('hidden');
-            alert("✅ Registro guardado.");
+            
             cargarHistorial();
         }
 
@@ -251,104 +364,75 @@
             const historialAgrupado = JSON.parse(localStorage.getItem('panHistorialAgrupado')) || {};
             const container = document.getElementById('historial-lista');
             container.innerHTML = '';
-            const fechasOrdenadas = Object.keys(historialAgrupado).sort((a, b) => {
-                const dateA = a.split('/').reverse().join('');
-                const dateB = b.split('/').reverse().join('');
-                return dateB.localeCompare(dateA); 
-            });
+            const fechasOrdenadas = Object.keys(historialAgrupado).sort((a, b) => b.split('/').reverse().join('').localeCompare(a.split('/').reverse().join('')));
+            
             if (fechasOrdenadas.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6 font-medium">No hay registros guardados</p>`;
+                container.innerHTML = `<div class="text-center py-10 opacity-50"><i class="fas fa-inbox text-4xl mb-3"></i><p class="text-xs font-bold uppercase tracking-wider">Sin registros</p></div>`;
                 return;
             }
+            
             fechasOrdenadas.forEach((fecha) => {
-                const registrosDelDia = historialAgrupado[fecha];
-                let tarjetaDiaHTML = `
-                    <div class="bg-white border border-slate-200 rounded-2xl p-4 text-[10px] shadow-sm space-y-3.5 transition-all hover:border-slate-300">
-                        <div class="flex justify-between items-center border-b border-slate-100 pb-2 font-bold text-slate-900 text-xs">
-                            <span class="flex items-center gap-1.5 text-slate-700"><i class="far fa-calendar-alt text-amber-900"></i> Ventas del: ${fecha}</span>
-                            <button onclick="eliminarDia('${fecha}')" class="text-slate-400 hover:text-red-500 transition-colors p-1" title="Eliminar este día"><i class="fas fa-trash-alt"></i></button>
+                const rDia = historialAgrupado[fecha];
+                let html = `
+                    <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-orange-500 rounded-l-2xl"></div>
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-3 font-bold text-slate-900 text-xs pl-2">
+                            <span class="flex items-center gap-2 text-slate-700"><i class="far fa-calendar-alt text-orange-500"></i> Día: ${fecha}</span>
+                            <button onclick="eliminarDia('${fecha}')" class="text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg p-1.5 transition-colors"><i class="fas fa-trash-alt"></i></button>
                         </div>
-                        <div class="space-y-3">
+                        <div class="space-y-3 mt-3 pl-2">
                 `;
-                registrosDelDia.forEach(r => {
-                    tarjetaDiaHTML += `
-                        <div class="border border-slate-100 rounded-xl p-2.5 bg-slate-50/50">
-                            <div class="font-extrabold text-slate-800 mb-2 text-[9.5px] tracking-wide uppercase flex justify-between items-center">
+                rDia.forEach(r => {
+                    html += `
+                        <div class="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                            <div class="font-black text-slate-800 mb-2 text-[10px] tracking-wide uppercase flex justify-between items-center">
                                 <span>${r.producto}</span>
-                                <span class="text-[7.5px] font-bold text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded">${r.paquetesTexto || 'Enteros'}</span>
+                                <span class="text-[8px] font-bold text-orange-600 bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-md">${r.paquetesTexto || 'Enteros'}</span>
                             </div>
-                            <div class="grid grid-cols-5 gap-1 text-center font-bold text-[8px] tracking-tight">
-                                <div class="bg-white border border-slate-100 p-1.5 rounded shadow-2xs">Meta de Ayer<br><b class="text-slate-800 text-[9.5px]">${r.meta}</b></div>
-                                <div class="bg-white border border-slate-100 p-1.5 rounded shadow-2xs">Vendido hoy<br><b class="text-slate-800 text-[9.5px]">${r.vendido}</b></div>
-                                <div class="bg-emerald-50/50 text-emerald-900 border border-emerald-100 p-1.5 rounded shadow-2xs">Sobrante<br><b class="text-[9.5px]">${r.finalHoy}</b></div>
-                                <div class="bg-amber-50/50 text-amber-900 border border-amber-100 p-1.5 rounded shadow-2xs">Descong.<br><b class="text-[9px]">${r.sacadoManana}</b></div>
-                                <div class="bg-slate-900 text-white border border-slate-950 p-1.5 rounded shadow-sm flex flex-col justify-center">
-                                    <span class="text-[6.5px] text-slate-400 font-semibold uppercase">Total ${r.fechaMananaTexto}</span>
-                                    <b class="text-[10px] text-amber-400 font-extrabold mt-0.5">${r.totalManana}</b>
+                            <div class="grid grid-cols-5 gap-1.5 text-center font-bold text-[8px] tracking-tight">
+                                <div class="bg-white border border-slate-200 p-1.5 rounded-lg">Meta ${r.fechaAyerTexto ? r.fechaAyerTexto.substring(0,5) : 'Ayer'}<br><b class="text-slate-800 text-[10px]">${r.meta}</b></div>
+                                <div class="bg-white border border-slate-200 p-1.5 rounded-lg">Vendido<br><b class="text-slate-800 text-[10px]">${r.vendido}</b></div>
+                                <div class="bg-emerald-50 text-emerald-700 border border-emerald-100 p-1.5 rounded-lg">Sobrante<br><b class="text-[10px] text-emerald-800">${r.finalHoy}</b></div>
+                                <div class="bg-orange-50 text-orange-700 border border-orange-100 p-1.5 rounded-lg">Descong.<br><b class="text-[9px] text-orange-800">${r.sacadoManana}</b></div>
+                                <div class="bg-slate-800 text-white border border-slate-900 p-1.5 rounded-lg flex flex-col justify-center shadow-md">
+                                    <span class="text-[7px] text-slate-400 font-bold uppercase">Meta ${r.fechaMananaTexto}</span>
+                                    <b class="text-[11px] text-emerald-400 font-black mt-0.5">${r.totalManana}</b>
                                 </div>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 });
-                tarjetaDiaHTML += `</div></div>`;
-                container.innerHTML += tarjetaDiaHTML;
+                html += `</div></div>`;
+                container.innerHTML += html;
             });
         }
 
         function eliminarDia(fecha) {
-            if (confirm(`¿Estás seguro de que quieres borrar de forma permanente los registros del día ${fecha}?`)) {
+            if (confirm(`⚠️ ¿Borrar permanentemente el día ${fecha}?`)) {
                 let h = JSON.parse(localStorage.getItem('panHistorialAgrupado')) || {};
                 delete h[fecha];
                 localStorage.setItem('panHistorialAgrupado', JSON.stringify(h));
-                cargarHistorial();
+                cargarHistorial(); generarCampos(); 
             }
         }
 
         function exportarAPDF() {
-            const historialAgrupado = JSON.parse(localStorage.getItem('panHistorialAgrupado')) || {};
-            const fechas = Object.keys(historialAgrupado);
-            if (fechas.length === 0) return alert("No hay datos para exportar.");
-            let filasHTML = '';
-            let count = 0;
-            const fechasOrdenadas = fechas.sort((a, b) => {
-                const dateA = a.split('/').reverse().join('');
-                const dateB = b.split('/').reverse().join('');
-                return dateB.localeCompare(dateA);
-            });
-            fechasOrdenadas.forEach((fecha) => {
-                historialAgrupado[fecha].forEach((r) => {
-                    const bg = count % 2 === 0 ? '#ffffff' : '#f8fafc';
-                    let anio = fecha.split('/')[2] || new Date().getFullYear();
-                    let fechaMananaCompleta = r.fechaMananaTexto ? `${r.fechaMananaTexto}/${anio}` : '';
-                    filasHTML += `
-                        <tr style="background-color: ${bg}; text-align: center; font-size: 11px;">
-                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; font-weight: bold;">${fecha}</td>
-                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-weight: bold; color: #475569;">${fechaMananaCompleta}</td>
-                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; font-weight: bold; color: #78350f;">${r.producto}</td>
-                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${r.meta}</td>
-                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${r.vendido}</td>
-                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; color: #15803d; font-weight: bold; background-color: #f0fdf4;">${r.finalHoy}</td>
-                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; color: #c2410c; font-weight: bold; background-color: #fff7ed;">${r.sacadoManana} <small style="display:block; font-size:8px; color:#b45309; font-weight:400;">(${r.paquetesTexto})</small></td>
-                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; color: #0f172a; font-weight: 800; background-color: #f1f5f9;">${r.totalManana}</td>
-                        </tr>`;
-                    count++;
+            const h = JSON.parse(localStorage.getItem('panHistorialAgrupado')) || {};
+            const fechas = Object.keys(h);
+            if (fechas.length === 0) return alert("Sin datos.");
+            let filas = ''; let c = 0;
+            fechas.sort((a,b)=>b.split('/').reverse().join('').localeCompare(a.split('/').reverse().join(''))).forEach(f => {
+                h[f].forEach(r => {
+                    const bg = c % 2 === 0 ? '#ffffff' : '#f8fafc';
+                    filas += `<tr style="background:${bg};text-align:center;font-size:11px;"><td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:left;font-weight:bold;">${f}</td><td style="padding:10px;border-bottom:1px solid #e2e8f0;font-weight:bold;color:#64748b;">${r.fechaMananaTexto||''}</td><td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:left;font-weight:bold;color:#ea580c;">${r.producto}</td><td style="padding:10px;border-bottom:1px solid #e2e8f0;">${r.meta}</td><td style="padding:10px;border-bottom:1px solid #e2e8f0;">${r.vendido}</td><td style="padding:10px;border-bottom:1px solid #e2e8f0;color:#15803d;font-weight:bold;background:#f0fdf4;">${r.finalHoy}</td><td style="padding:10px;border-bottom:1px solid #e2e8f0;color:#c2410c;font-weight:bold;background:#fff7ed;">${r.sacadoManana} <small style="display:block;font-size:8px;color:#b45309;">(${r.paquetesTexto})</small></td><td style="padding:10px;border-bottom:1px solid #e2e8f0;color:#0f172a;font-weight:900;background:#f1f5f9;">${r.totalManana}</td></tr>`;
+                    c++;
                 });
             });
-            const ventanaReporte = window.open('', '_blank');
-            ventanaReporte.document.write(`
-                <html><head><title>Reporte_Muffin_Inventario</title><style>body{font-family:'Helvetica Neue',Arial,sans-serif;padding:20px;color:#1e293b;background:#fff;}table{width:100%;border-collapse:collapse;margin-top:15px;}th{background-color:#0f172a;color:white;padding:12px;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;}@media print{@page{size:A4 landscape;margin:10mm;}}</style></head><body>
-                <div style="border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px;"><h2 style="margin: 0; color: #0f172a; font-size: 22px;">Control de Pan Muffin</h2><p style="margin: 3px 0 0 0; font-size: 12px; color: #64748b; font-weight: bold;">Reporte Histórico</p></div>
-                <table><thead><tr><th style="text-align:left;">Fecha Venta</th><th>Fecha Mañana</th><th style="text-align:left;">Producto</th><th>Meta de Ayer</th><th>Vendido</th><th>Sobrante</th><th>Descong.</th><th>Total Mañana</th></tr></thead><tbody>${filasHTML}</tbody></table>
-                <script>setTimeout(function(){window.print();},300);<\/script></body></html>
-            `);
-            ventanaReporte.document.close();
+            const v = window.open('','_blank');
+            v.document.write(`<html><head><title>Reporte_Muffin</title><style>body{font-family:sans-serif;padding:20px;color:#1e293b;}table{width:100%;border-collapse:collapse;margin-top:15px;}th{background:#0f172a;color:white;padding:12px;font-size:10px;text-transform:uppercase;}@media print{@page{size:A4 landscape;margin:10mm;}}</style></head><body><div style="border-bottom:2px solid #ea580c;padding-bottom:10px;margin-bottom:20px;"><h2 style="margin:0;color:#0f172a;">Control Panadería</h2><p style="margin:3px 0 0 0;font-size:12px;color:#64748b;font-weight:bold;">Reporte Histórico</p></div><table><thead><tr><th style="text-align:left;">Venta</th><th>Día Sig.</th><th style="text-align:left;">Producto</th><th>Meta Inicial</th><th>Vendido</th><th>Sobrante</th><th>Descong.</th><th>Meta Generada</th></tr></thead><tbody>${filas}</tbody></table><script>setTimeout(()=>window.print(),300);<\/script></body></html>`);
+            v.document.close();
         }
 
-        window.onload = () => {
-            document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
-            generarCampos();
-            cargarHistorial();
-        };
+        window.onload = () => { document.getElementById('fecha').value = new Date().toISOString().split('T')[0]; generarCampos(); cargarHistorial(); };
     </script>
 </body>
 </html>
