@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f97316">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Control Muffin</title>
+    <title>Descongelado Pan muffin</title>
     
     <!-- Enlace dinámico para el Manifest PWA -->
     <link rel="manifest" id="manifest">
@@ -41,12 +41,12 @@
                     🥐
                 </div>
                 <div>
-                    <h1 class="text-2xl font-black tracking-tight text-white drop-shadow-sm leading-none mb-1">Pan Muffin</h1>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight text-white drop-shadow-sm leading-none mb-1">Descongelado Pan muffin</h1>
                     <p class="text-orange-100 text-[11px] font-bold tracking-widest uppercase opacity-90">Control Diario</p>
                 </div>
             </div>
             
-            <!-- Botón de Instalación (Oculto por defecto, se activa en móviles o Chrome) -->
+            <!-- Botón de Instalación -->
             <button id="btn-instalar" onclick="instalarApp()" class="hidden bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 text-white px-4 py-2.5 rounded-xl font-bold items-center justify-center gap-2 transition-all shadow-sm text-xs">
                 <i class="fas fa-download"></i> Instalar App
             </button>
@@ -104,7 +104,7 @@
         </div>
     </div>
 
-    <!-- Botón Flotante (Solo visible en Móvil) para que parezca app nativa -->
+    <!-- Botón Flotante (Solo visible en Móvil) -->
     <div class="fixed bottom-5 left-5 right-5 md:hidden z-50 fade-in">
         <button onclick="guardarRegistro()" class="w-full bg-slate-900 active:bg-black text-white p-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 shadow-2xl shadow-slate-900/40 border border-slate-800">
             <i class="fas fa-save text-orange-400"></i> GUARDAR DATOS
@@ -117,7 +117,7 @@
         // ==========================================
         const manifestApp = {
             "name": "Descongelado Pan muffin",
-            "short_name": "Pan Muffin",
+            "short_name": "Descongelado Pan",
             "start_url": ".",
             "display": "standalone",
             "background_color": "#f1f5f9",
@@ -428,7 +428,7 @@
                 });
             });
             const v = window.open('','_blank');
-            v.document.write(`<html><head><title>Reporte_Muffin</title><style>body{font-family:sans-serif;padding:20px;color:#1e293b;}table{width:100%;border-collapse:collapse;margin-top:15px;}th{background:#0f172a;color:white;padding:12px;font-size:10px;text-transform:uppercase;}@media print{@page{size:A4 landscape;margin:10mm;}}</style></head><body><div style="border-bottom:2px solid #ea580c;padding-bottom:10px;margin-bottom:20px;"><h2 style="margin:0;color:#0f172a;">Control Panadería</h2><p style="margin:3px 0 0 0;font-size:12px;color:#64748b;font-weight:bold;">Reporte Histórico</p></div><table><thead><tr><th style="text-align:left;">Venta</th><th>Día Sig.</th><th style="text-align:left;">Producto</th><th>Meta Inicial</th><th>Vendido</th><th>Sobrante</th><th>Descong.</th><th>Meta Generada</th></tr></thead><tbody>${filas}</tbody></table><script>setTimeout(()=>window.print(),300);<\/script></body></html>`);
+            v.document.write(`<html><head><title>Reporte_Muffin</title><style>body{font-family:sans-serif;padding:20px;color:#1e293b;}table{width:100%;border-collapse:collapse;margin-top:15px;}th{background:#0f172a;color:white;padding:12px;font-size:10px;text-transform:uppercase;}@media print{@page{size:A4 landscape;margin:10mm;}}</style></head><body><div style="border-bottom:2px solid #ea580c;padding-bottom:10px;margin-bottom:20px;"><h2 style="margin:0;color:#0f172a;">Descongelado Pan muffin</h2><p style="margin:3px 0 0 0;font-size:12px;color:#64748b;font-weight:bold;">Reporte Histórico</p></div><table><thead><tr><th style="text-align:left;">Venta</th><th>Día Sig.</th><th style="text-align:left;">Producto</th><th>Meta Inicial</th><th>Vendido</th><th>Sobrante</th><th>Descong.</th><th>Meta Generada</th></tr></thead><tbody>${filas}</tbody></table><script>setTimeout(()=>window.print(),300);<\/script></body></html>`);
             v.document.close();
         }
 
