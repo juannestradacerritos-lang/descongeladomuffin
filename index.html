@@ -203,11 +203,16 @@
             const container = document.getElementById('tabla-calculadora');
             container.innerHTML = '';
             const fechas = obtenerFechas();
+            const fechaInputVal = document.getElementById('fecha').value;
 
+            // Historial para arrastrar la meta de ayer
             let historialAgrupado = JSON.parse(localStorage.getItem('panHistorialAgrupado')) || {};
             let fechasGuardadas = Object.keys(historialAgrupado).sort((a, b) => b.split('/').reverse().join('').localeCompare(a.split('/').reverse().join('')));
             let hoyInvertido = fechas.hoy ? fechas.hoy.split('/').reverse().join('') : '';
             let fechaAnteriorKey = fechasGuardadas.find(f => f.split('/').reverse().join('') < hoyInvertido);
+
+            // Borrador automático para recordar cambios no guardados
+            let borrador = JSON.parse(localStorage.getItem('panBorrador_' + fechaInputVal));
 
             productos.forEach((prod, index) => {
                 prod.meta = metasBase[prod.id];
@@ -221,6 +226,16 @@
                     }
                 }
 
+                // Aplicar borrador si existe y no se ha guardado, para no perder los datos al recargar
+                if (borrador && borrador[index]) {
+                    prod.meta = borrador[index].meta;
+                    prod.inicial = borrador[index].inicial;
+                    prod.sacadoManana = borrador[index].sacadoManana;
+                } else {
+                    prod.inicial = 0;
+                    prod.sacadoManana = 0;
+                }
+
                 container.innerHTML += `
                     <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
@@ -228,18 +243,20 @@
                             <span class="text-[9px] bg-orange-50 text-orange-600 font-extrabold px-2 py-1 rounded-lg tracking-wider uppercase border border-orange-100">${prod.etiquetaEmpaque}</span>
                         </div>
                         <div class="grid grid-cols-3 gap-3">
-                            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 shadow-inner">
+                            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 shadow-inner flex flex-col justify-between relative group">
                                 <label class="block text-[9px] font-bold text-slate-400 uppercase text-center mb-1 tracking-wider">Meta (${prod.textoMetaAyerDinamico.substring(0,5)})</label>
-                                <input type="number" id="input-meta-${index}" value="${prod.meta}" min="0" onfocus="this.select()" oninput="actualizarValores(${index}, 'meta', this.value)" class="w-full bg-transparent text-center text-lg font-black text-slate-700 focus:outline-none">
+                                <input type="number" id="input-meta-${index}" value="${prod.meta}" min="0" onfocus="if(this.value==='0')this.value=''" onblur="if(this.value==='')this.value='0'; actualizarValores(${index}, 'meta', this.value)" oninput="actualizarValores(${index}, 'meta', this.value)" class="w-full bg-transparent text-center text-lg font-black text-slate-700 focus:outline-none">
+                                <!-- Botón Jabas + para Meta -->
+                                <button onclick="abrirConvertidorJabasMeta(${index})" class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-white shadow-sm border border-slate-200 text-[8px] text-orange-600 font-bold px-2 py-0.5 rounded-full hover:bg-orange-50 transition-colors whitespace-nowrap">${prod.id === 'muffin' ? 'Jabas' : 'Bolsas'} +</button>
                             </div>
                             <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 shadow-inner flex flex-col justify-between relative group">
                                 <label class="block text-[9px] font-bold text-slate-400 uppercase text-center mb-1 tracking-wider">Me Quedó</label>
-                                <input type="number" id="input-inicial-${index}" value="${prod.inicial}" min="0" onfocus="this.select()" oninput="actualizarValores(${index}, 'inicial', this.value)" class="w-full bg-transparent text-center text-lg font-black text-orange-600 focus:outline-none">
-                                <button onclick="abrirConvertidorBolsas(${index})" class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-white shadow-sm border border-slate-200 text-[8px] text-orange-600 font-bold px-2 py-0.5 rounded-full hover:bg-orange-50 transition-colors whitespace-nowrap">Bolsas <i class="fas fa-plus"></i></button>
+                                <input type="number" id="input-inicial-${index}" value="${prod.inicial}" min="0" onfocus="if(this.value==='0')this.value=''" onblur="if(this.value==='')this.value='0'; actualizarValores(${index}, 'inicial', this.value)" oninput="actualizarValores(${index}, 'inicial', this.value)" class="w-full bg-transparent text-center text-lg font-black text-orange-600 focus:outline-none">
+                                <button onclick="abrirConvertidorBolsas(${index})" class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-white shadow-sm border border-slate-200 text-[8px] text-orange-600 font-bold px-2 py-0.5 rounded-full hover:bg-orange-50 transition-colors whitespace-nowrap">Bolsas +</button>
                             </div>
                             <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 shadow-inner">
                                 <label class="block text-[9px] font-bold text-slate-400 uppercase text-center mb-1 tracking-wider">Pa' Mañana</label>
-                                <input type="number" id="input-sacadoManana-${index}" value="${prod.sacadoManana}" min="0" onfocus="this.select()" oninput="actualizarValores(${index}, 'sacadoManana', this.value)" class="w-full bg-transparent text-center text-lg font-black text-emerald-600 focus:outline-none">
+                                <input type="number" id="input-sacadoManana-${index}" value="${prod.sacadoManana}" min="0" onfocus="if(this.value==='0')this.value=''" onblur="if(this.value==='')this.value='0'; actualizarValores(${index}, 'sacadoManana', this.value)" oninput="actualizarValores(${index}, 'sacadoManana', this.value)" class="w-full bg-transparent text-center text-lg font-black text-emerald-600 focus:outline-none">
                             </div>
                         </div>
                         <div class="mt-5 grid grid-cols-2 gap-3">
@@ -273,6 +290,12 @@
         function actualizarValores(index, campo, valor) {
             productos[index][campo] = parseInt(valor) || 0;
             calcularTotalesVisuales(index);
+            
+            // Auto-guardado en borrador silencioso
+            const fechaInputVal = document.getElementById('fecha').value;
+            if (fechaInputVal) {
+                localStorage.setItem('panBorrador_' + fechaInputVal, JSON.stringify(productos));
+            }
         }
 
         function calcularTotalesVisuales(index) {
@@ -300,6 +323,24 @@
             if(document.getElementById(`lbl-texto-abajo-${prod.id}`)) document.getElementById(`lbl-texto-abajo-${prod.id}`).innerHTML = `<i class="far fa-calendar-check text-slate-400"></i> ${prod.textoAbajo} ${fechas.manana || 'Mañana'}`;
             if(document.getElementById(`total-manana-num-${prod.id}`)) document.getElementById(`total-manana-num-${prod.id}`).innerText = `${empaquesMananaCompletos} ${textoEmpaqueManana}`;
             if(document.getElementById(`desglose-manana-${prod.id}`)) document.getElementById(`desglose-manana-${prod.id}`).innerText = `${totalParaManana} ${prod.unidadMedida}`;
+        }
+
+        // Convertidor para la casilla de la Meta
+        function abrirConvertidorJabasMeta(index) {
+            const prod = productos[index];
+            const cantidadPorPaquete = prod.id === 'muffin' ? 84 : 12; 
+            const nombreTexto = prod.id === 'muffin' ? 'JABAS completas' : 'BOLSAS completas';
+            const respuesta = prompt(`¿Cuántas ${nombreTexto} extras quieres SUMAR a la Meta de ${prod.nombre}? \n(Cada una equivale a ${cantidadPorPaquete} unidades)`);
+            if (respuesta) {
+                const paquetes = parseInt(respuesta);
+                if (!isNaN(paquetes) && paquetes >= 0) {
+                    const totalUnidades = paquetes * cantidadPorPaquete;
+                    const metaPrevia = parseInt(prod.meta) || 0;
+                    const granTotal = metaPrevia + totalUnidades;
+                    document.getElementById(`input-meta-${index}`).value = granTotal;
+                    actualizarValores(index, 'meta', granTotal);
+                }
+            }
         }
 
         function abrirConvertidorBolsas(index) {
@@ -415,20 +456,65 @@
             }
         }
 
+        // Exportar a PDF agrupado por fechas
         function exportarAPDF() {
             const h = JSON.parse(localStorage.getItem('panHistorialAgrupado')) || {};
             const fechas = Object.keys(h);
             if (fechas.length === 0) return alert("Sin datos.");
-            let filas = ''; let c = 0;
-            fechas.sort((a,b)=>b.split('/').reverse().join('').localeCompare(a.split('/').reverse().join(''))).forEach(f => {
-                h[f].forEach(r => {
+            
+            let contenidoPDF = '';
+            
+            fechas.sort((a,b)=>b.split('/').reverse().join('').localeCompare(a.split('/').reverse().join(''))).forEach(fecha => {
+                contenidoPDF += `
+                <div style="margin-bottom: 25px; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; page-break-inside: avoid; font-family: sans-serif;">
+                    <div style="background-color: #ea580c; color: white; padding: 10px 15px; font-weight: bold; font-size: 14px;">
+                        🗓️ Venta del Día: ${fecha}
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 11px;">
+                        <thead>
+                            <tr>
+                                <th style="background:#0f172a; color:white; padding:10px; text-align:left; width: 25%;">Producto</th>
+                                <th style="background:#0f172a; color:white; padding:10px;">Meta Inicial</th>
+                                <th style="background:#0f172a; color:white; padding:10px;">Vendido</th>
+                                <th style="background:#0f172a; color:white; padding:10px;">Sobrante</th>
+                                <th style="background:#0f172a; color:white; padding:10px;">Descong.</th>
+                                <th style="background:#0f172a; color:white; padding:10px;">Meta Generada</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                let c = 0;
+                h[fecha].forEach(r => {
                     const bg = c % 2 === 0 ? '#ffffff' : '#f8fafc';
-                    filas += `<tr style="background:${bg};text-align:center;font-size:11px;"><td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:left;font-weight:bold;">${f}</td><td style="padding:10px;border-bottom:1px solid #e2e8f0;font-weight:bold;color:#64748b;">${r.fechaMananaTexto||''}</td><td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:left;font-weight:bold;color:#ea580c;">${r.producto}</td><td style="padding:10px;border-bottom:1px solid #e2e8f0;">${r.meta}</td><td style="padding:10px;border-bottom:1px solid #e2e8f0;">${r.vendido}</td><td style="padding:10px;border-bottom:1px solid #e2e8f0;color:#15803d;font-weight:bold;background:#f0fdf4;">${r.finalHoy}</td><td style="padding:10px;border-bottom:1px solid #e2e8f0;color:#c2410c;font-weight:bold;background:#fff7ed;">${r.sacadoManana} <small style="display:block;font-size:8px;color:#b45309;">(${r.paquetesTexto})</small></td><td style="padding:10px;border-bottom:1px solid #e2e8f0;color:#0f172a;font-weight:900;background:#f1f5f9;">${r.totalManana}</td></tr>`;
+                    contenidoPDF += `
+                        <tr style="background:${bg}; border-top: 1px solid #e2e8f0;">
+                            <td style="padding:10px; text-align:left; font-weight:bold; color:#ea580c;">${r.producto}</td>
+                            <td style="padding:10px;">${r.meta}</td>
+                            <td style="padding:10px;">${r.vendido}</td>
+                            <td style="padding:10px; color:#15803d; font-weight:bold; background:#f0fdf4;">${r.finalHoy}</td>
+                            <td style="padding:10px; color:#c2410c; font-weight:bold; background:#fff7ed;">${r.sacadoManana} <small style="display:block;font-size:8px;color:#b45309;font-weight:normal;margin-top:2px;">(${r.paquetesTexto})</small></td>
+                            <td style="padding:10px; color:#0f172a; font-weight:900; background:#f1f5f9;">${r.totalManana} <small style="display:block;font-size:8px;color:#64748b;font-weight:normal;margin-top:2px;">(Para el ${r.fechaMananaTexto||''})</small></td>
+                        </tr>`;
                     c++;
                 });
+                contenidoPDF += `</tbody></table></div>`;
             });
+
             const v = window.open('','_blank');
-            v.document.write(`<html><head><title>Reporte_Muffin</title><style>body{font-family:sans-serif;padding:20px;color:#1e293b;}table{width:100%;border-collapse:collapse;margin-top:15px;}th{background:#0f172a;color:white;padding:12px;font-size:10px;text-transform:uppercase;}@media print{@page{size:A4 landscape;margin:10mm;}}</style></head><body><div style="border-bottom:2px solid #ea580c;padding-bottom:10px;margin-bottom:20px;"><h2 style="margin:0;color:#0f172a;">Descongelado Pan muffin</h2><p style="margin:3px 0 0 0;font-size:12px;color:#64748b;font-weight:bold;">Reporte Histórico</p></div><table><thead><tr><th style="text-align:left;">Venta</th><th>Día Sig.</th><th style="text-align:left;">Producto</th><th>Meta Inicial</th><th>Vendido</th><th>Sobrante</th><th>Descong.</th><th>Meta Generada</th></tr></thead><tbody>${filas}</tbody></table><script>setTimeout(()=>window.print(),300);<\/script></body></html>`);
+            v.document.write(`
+                <html><head><title>Reporte_Muffin</title>
+                <style>
+                    body{font-family:sans-serif;padding:20px;color:#1e293b;} 
+                    @media print{@page{size:A4 portrait;margin:10mm;}}
+                </style></head>
+                <body>
+                    <div style="border-bottom:2px solid #ea580c;padding-bottom:10px;margin-bottom:20px;">
+                        <h2 style="margin:0;color:#0f172a;">Descongelado Pan muffin</h2>
+                        <p style="margin:3px 0 0 0;font-size:12px;color:#64748b;font-weight:bold;">Reporte Histórico Agrupado por Día</p>
+                    </div>
+                    ${contenidoPDF}
+                    <script>setTimeout(()=>window.print(),300);<\/script>
+                </body></html>
+            `);
             v.document.close();
         }
 
