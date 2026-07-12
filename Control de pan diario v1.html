@@ -131,7 +131,7 @@
         const manifestBlob = new Blob([JSON.stringify(manifestApp)], {type: 'application/manifest+json'});
         document.getElementById('manifest').href = URL.createObjectURL(manifestBlob);
 
-        // Service Worker Dinámico (Para funcionamiento Offline y ser App válida)
+        // Service Worker Dinámico
         const swCode = `
             self.addEventListener('install', e => self.skipWaiting());
             self.addEventListener('activate', e => e.waitUntil(clients.claim()));
@@ -211,8 +211,8 @@
             let hoyInvertido = fechas.hoy ? fechas.hoy.split('/').reverse().join('') : '';
             let fechaAnteriorKey = fechasGuardadas.find(f => f.split('/').reverse().join('') < hoyInvertido);
 
-            // Borrador automático para recordar cambios no guardados
-            let borrador = JSON.parse(localStorage.getItem('panBorrador_' + fechaInputVal));
+            // Borrador automático
+            let borrador = JSON.parse(localStorage.getItem('muffinBorrador_' + fechaInputVal));
 
             productos.forEach((prod, index) => {
                 prod.meta = metasBase[prod.id];
@@ -226,11 +226,10 @@
                     }
                 }
 
-                // Aplicar borrador si existe y no se ha guardado, para no perder los datos al recargar
                 if (borrador && borrador[index]) {
-                    prod.meta = borrador[index].meta;
-                    prod.inicial = borrador[index].inicial;
-                    prod.sacadoManana = borrador[index].sacadoManana;
+                    prod.meta = borrador[index].meta !== undefined ? borrador[index].meta : prod.meta;
+                    prod.inicial = borrador[index].inicial !== undefined ? borrador[index].inicial : 0;
+                    prod.sacadoManana = borrador[index].sacadoManana !== undefined ? borrador[index].sacadoManana : 0;
                 } else {
                     prod.inicial = 0;
                     prod.sacadoManana = 0;
@@ -246,7 +245,6 @@
                             <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 shadow-inner flex flex-col justify-between relative group">
                                 <label class="block text-[9px] font-bold text-slate-400 uppercase text-center mb-1 tracking-wider">Meta (${prod.textoMetaAyerDinamico.substring(0,5)})</label>
                                 <input type="number" id="input-meta-${index}" value="${prod.meta}" min="0" onfocus="if(this.value==='0')this.value=''" onblur="if(this.value==='')this.value='0'; actualizarValores(${index}, 'meta', this.value)" oninput="actualizarValores(${index}, 'meta', this.value)" class="w-full bg-transparent text-center text-lg font-black text-slate-700 focus:outline-none">
-                                <!-- Botón Jabas + para Meta -->
                                 <button onclick="abrirConvertidorJabasMeta(${index})" class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-white shadow-sm border border-slate-200 text-[8px] text-orange-600 font-bold px-2 py-0.5 rounded-full hover:bg-orange-50 transition-colors whitespace-nowrap">${prod.id === 'muffin' ? 'Jabas' : 'Bolsas'} +</button>
                             </div>
                             <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 shadow-inner flex flex-col justify-between relative group">
@@ -291,10 +289,10 @@
             productos[index][campo] = parseInt(valor) || 0;
             calcularTotalesVisuales(index);
             
-            // Auto-guardado en borrador silencioso
+            // Auto-guardado
             const fechaInputVal = document.getElementById('fecha').value;
             if (fechaInputVal) {
-                localStorage.setItem('panBorrador_' + fechaInputVal, JSON.stringify(productos));
+                localStorage.setItem('muffinBorrador_' + fechaInputVal, JSON.stringify(productos));
             }
         }
 
@@ -302,30 +300,44 @@
             const prod = productos[index];
             const fechas = obtenerFechas();
 
+            // === LÓGICA ORIGINAL: Para "Meta" y "Vendido" (Cuadros Oscuro y Naranja) ===
             const faltanteHoy = Math.max(0, prod.meta - prod.inicial);
             const empaquesHoyCompletos = calcularEmpaquesRedondedos(faltanteHoy, prod.porEmpaque);
             const sacarHoyFisico = empaquesHoyCompletos * prod.porEmpaque;
             prod.vendido = faltanteHoy; 
 
-            const empaquesMananaCompletos = calcularEmpaquesRedondedos(prod.sacadoManana, prod.porEmpaque);
+            // === LÓGICA NUEVA (600 y 100 = 604): Para "Pa' Mañana" (Cuadro Inferior) ===
+            let sacarMananaFisico = 0;
+            let finalManana = prod.inicial;
+            let empaquesMananaCompletos = 0;
+
+            if (prod.inicial > prod.sacadoManana) {
+                // Si tienes más de lo que quieres para mañana, sacas 0.
+                finalManana = prod.inicial;
+            } else {
+                // Si te falta para llegar a la meta de mañana, calculas jabas exactas.
+                const faltanteManana = Math.max(0, prod.sacadoManana - prod.inicial);
+                empaquesMananaCompletos = Math.ceil(faltanteManana / prod.porEmpaque);
+                sacarMananaFisico = empaquesMananaCompletos * prod.porEmpaque;
+                finalManana = prod.inicial + sacarMananaFisico;
+            }
+
             const textoEmpaqueManana = empaquesMananaCompletos === 1 ? prod.empaqueNombreSingular : prod.empaqueNombrePlural;
             const textoEmpaqueHoy = empaquesHoyCompletos === 1 ? prod.empaqueNombreSingular : prod.empaqueNombrePlural;
 
-            const sacarMananaFisico = empaquesMananaCompletos * prod.porEmpaque;
-            const meQuedoNumero = parseInt(prod.inicial) || 0;
-            const totalParaManana = meQuedoNumero + sacarMananaFisico;
-
+            // Actualización Visual
             if(document.getElementById(`lbl-meta-ayer-${prod.id}`)) document.getElementById(`lbl-meta-ayer-${prod.id}`).innerText = `Meta (${fechas.hoy ? fechas.hoy.substring(0,5) : ''})`;
             if(document.getElementById(`sacarHoy-val-${prod.id}`)) document.getElementById(`sacarHoy-val-${prod.id}`).innerText = sacarHoyFisico;
             if(document.getElementById(`paquetes-val-${prod.id}`)) document.getElementById(`paquetes-val-${prod.id}`).innerText = `${empaquesHoyCompletos} ${textoEmpaqueHoy}`;
+            
             if(document.getElementById(`lbl-vendido-hoy-${prod.id}`)) document.getElementById(`lbl-vendido-hoy-${prod.id}`).innerText = `Vendido ${fechas.hoy ? fechas.hoy.substring(0,5) : 'hoy'}`;
             if(document.getElementById(`vendido-val-${prod.id}`)) document.getElementById(`vendido-val-${prod.id}`).innerText = prod.vendido;
+            
             if(document.getElementById(`lbl-texto-abajo-${prod.id}`)) document.getElementById(`lbl-texto-abajo-${prod.id}`).innerHTML = `<i class="far fa-calendar-check text-slate-400"></i> ${prod.textoAbajo} ${fechas.manana || 'Mañana'}`;
             if(document.getElementById(`total-manana-num-${prod.id}`)) document.getElementById(`total-manana-num-${prod.id}`).innerText = `${empaquesMananaCompletos} ${textoEmpaqueManana}`;
-            if(document.getElementById(`desglose-manana-${prod.id}`)) document.getElementById(`desglose-manana-${prod.id}`).innerText = `${totalParaManana} ${prod.unidadMedida}`;
+            if(document.getElementById(`desglose-manana-${prod.id}`)) document.getElementById(`desglose-manana-${prod.id}`).innerText = `${finalManana} ${prod.unidadMedida}`;
         }
 
-        // Convertidor para la casilla de la Meta
         function abrirConvertidorJabasMeta(index) {
             const prod = productos[index];
             const cantidadPorPaquete = prod.id === 'muffin' ? 84 : 12; 
@@ -368,16 +380,24 @@
             historialAgrupado[fechas.hoy] = [];
             
             productos.forEach(prod => {
-                const empaquesMananaCompletos = calcularEmpaquesRedondedos(prod.sacadoManana, prod.porEmpaque);
-                const sacarMananaFisico = empaquesMananaCompletos * prod.porEmpaque;
-                const meQuedoNumero = parseInt(prod.inicial) || 0;
-                const totalTiendaManana = meQuedoNumero + sacarMananaFisico;
+                // Cálculo para el guardado basado en la lógica Inteligente de "Pa' Mañana"
+                let sacarMananaFisico = 0;
+                let empaquesMananaCompletos = 0;
+                let finalManana = parseInt(prod.inicial) || 0;
+
+                if (finalManana <= prod.sacadoManana) {
+                    const faltanteManana = Math.max(0, prod.sacadoManana - finalManana);
+                    empaquesMananaCompletos = Math.ceil(faltanteManana / prod.porEmpaque);
+                    sacarMananaFisico = empaquesMananaCompletos * prod.porEmpaque;
+                    finalManana = finalManana + sacarMananaFisico;
+                }
+
                 const textoEmpaqueManana = empaquesMananaCompletos === 1 ? prod.empaqueNombreSingular : prod.empaqueNombrePlural;
                 const textoFechaMetaCorta = prod.textoMetaAyerDinamico ? prod.textoMetaAyerDinamico.substring(0,5) : fechas.ayer.substring(0,5);
 
                 historialAgrupado[fechas.hoy].push({
                     producto: prod.nombre, meta: parseInt(prod.meta) || 0, vendido: parseInt(prod.vendido) || 0,
-                    sacadoManana: sacarMananaFisico, finalHoy: meQuedoNumero, totalManana: totalTiendaManana, 
+                    sacadoManana: sacarMananaFisico, finalHoy: parseInt(prod.inicial) || 0, totalManana: finalManana, 
                     fechaMananaTexto: fechas.manana, fechaAyerTexto: prod.textoMetaAyerDinamico || fechas.ayer,
                     paquetesTexto: `${empaquesMananaCompletos} ${textoEmpaqueManana}`
                 });
@@ -388,9 +408,9 @@
                         <div class="grid grid-cols-5 gap-1.5 text-center font-bold text-[9px]">
                             <div class="bg-black/20 p-1.5 rounded-lg border border-white/10">Meta ${textoFechaMetaCorta}<br><span class="text-white text-xs">${prod.meta}</span></div>
                             <div class="bg-black/20 p-1.5 rounded-lg border border-white/10">Vendido<br><span class="text-white text-xs">${prod.vendido}</span></div>
-                            <div class="bg-emerald-400/20 p-1.5 rounded-lg border border-emerald-300/30 text-emerald-100">Sobrante<br><span class="text-white text-xs">${meQuedoNumero}</span></div>
+                            <div class="bg-emerald-400/20 p-1.5 rounded-lg border border-emerald-300/30 text-emerald-100">Sobrante<br><span class="text-white text-xs">${prod.inicial}</span></div>
                             <div class="bg-emerald-400/20 p-1.5 rounded-lg border border-emerald-300/30 text-emerald-100">Descong.<br><span class="text-white text-xs">${empaquesMananaCompletos} ${textoEmpaqueManana.substring(0,3)}</span></div>
-                            <div class="bg-white text-emerald-900 p-1.5 rounded-lg border border-white">Meta ${fechas.manana.substring(0,5)}<br><span class="text-emerald-700 text-xs font-black">${totalTiendaManana}</span></div>
+                            <div class="bg-white text-emerald-900 p-1.5 rounded-lg border border-white">Meta ${fechas.manana.substring(0,5)}<br><span class="text-emerald-700 text-xs font-black">${finalManana}</span></div>
                         </div>
                     </div>`;
             });
